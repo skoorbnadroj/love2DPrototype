@@ -11,3 +11,8 @@ function random(a, b)
     end
     return love.math.random()*(max - min) + min
 end
+
+function round(n, mult)
+    mult = mult or 1
+    return math.floor((n + mult/2)/mult) * mult
+end

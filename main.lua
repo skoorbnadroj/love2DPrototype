@@ -71,8 +71,6 @@ function love.update(dt)
     end
 
     if enemySpawnTimer > enemySpawnThreshold then 
-        local entity = 
-        print("Enemy Spawned!")
         table.insert(GameEntities,
             {
                 type = 'Enemy',
@@ -84,7 +82,6 @@ function love.update(dt)
                 dead = false
             }
         )
-        print('Game Entities: ' .. #GameEntities)
         enemySpawnTimer = 0
     end
 
@@ -94,7 +91,7 @@ function love.update(dt)
         if entity.type == 'Enemy' then 
             dX, dY = 0, entity.speed * dt
             updateEntityPosition(entity, dX, dY)
-            if checkBounds(entity, -50, gw + 50, -100, gh + 50) then 
+            if checkEntityBounds(entity, -50, gw + 50, -100, gh + 50) then 
                 entity.dead = true 
             end
             if entity.health < 0 then entity.dead = true end
@@ -109,7 +106,7 @@ function love.update(dt)
         if entity.type == 'PlayerBullet' then 
             dX, dY = entity.speed * math.cos(entity.angle) * dt, entity.speed * math.sin(entity.angle) * dt
             updateEntityPosition(entity, dX, dY)
-            if checkBounds(entity, -entity.w, gw + entity.w, -entity.w, gh + entity.w) then 
+            if checkEntityBounds(entity, -entity.w, gw + entity.w, -entity.w, gh + entity.w) then 
                 entity.dead = true 
             end
             for j = #GameEntities, 1, -1 do 
@@ -324,7 +321,7 @@ function handlePlayerInput(entity, dt)
     return dX, dY
 end
 
-function checkBounds(entity, minX, maxX, minY, maxY) 
+function checkEntityBounds(entity, minX, maxX, minY, maxY) 
     return entity.x < minX or entity.x > maxX or entity.y < minY or entity.y > maxY
 end
 

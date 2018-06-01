@@ -186,28 +186,6 @@ function updateEntityPosition(entity, dX, dY)
     entity.x, entity.y = entity.x + dX, entity.y + dY
 end
 
-function eachType(entities, type, fn)
-    for i, entity in ipairs(entities) do 
-        if entity.type == type then fn(entity) end
-    end
-end
-
-function each(entities, fn)
-    for i, entity in ipairs(entities) do 
-        fn(entity)
-    end
-end
-
-function filter (things, fn)
-    local filtered = {}
-    each(things, function(thing)
-        if fn(thing) then
-            table.insert(filtered, thing)
-        end
-    end)
-    return filtered
-end
-
 function renderEntity(renderStyles, entity, opts)
     renderStyles[entity.type](entity, opts)
 end

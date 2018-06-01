@@ -2,6 +2,10 @@ require 'Utils'
 
 Canvas = love.graphics.newCanvas(gw, gh)
 
+RenderStyles = require 'renderStyles'
+ParticleTemplates = require 'particleTemplates'
+EnemyTemplates = require 'enemyTemplates'
+
 GameEntities = {}
 
 Player = {
@@ -15,29 +19,8 @@ Player = {
     dead = false
 }
 
-ParticleColors = {
-    {
-        r = 255,
-        g = 128,
-        b = 0,
-        a = 235
-    },
-    {
-        r = 255,
-        g = 0,
-        b = 0,
-        a = 235
-    },
-    {
-        r = 255,
-        g = 255,
-        b = 255,
-        a = 235
-    }
-}
-
 local enemySpawnTimer = 0
-local enemySpawnThreshold = 0.75
+local enemySpawnThreshold = 3
 
 function love.load()
     Canvas:setFilter('nearest', 'nearest')
@@ -45,17 +28,9 @@ function love.load()
     love.graphics.setLineStyle('rough')
     resize(3)
 
-    Enemy = {
-        type = 'Enemy',
-        x = gw / 2,
-        y = gh / 2,
-        w = 20,
-        speed = 0,
-        health = 1000000,
-        dead = false
-    }
+    local enemy = EnemyTemplates['Circling']()
     table.insert(GameEntities, Player)
-    table.insert(GameEntities, Enemy)
+    table.insert(GameEntities, enemy)
 
     love.keyboard.keysPressed = {}
 
@@ -90,7 +65,7 @@ function love.update(dt)
         local entity = GameEntities[i]
         local dX, dY
         if entity.type == 'Enemy' then 
-            dX, dY = 0, entity.speed * dt
+            dX, dY = (math.sin(entity.tick or 0) * entity.speed) * dt, (math.cos(entity.tick or 0) * entity.speed) * dt 
             updateEntityPosition(entity, dX, dY)
             if checkEntityBounds(entity, -50, gw + 50, -100, gh + 50) then 
                 entity.dead = true 
@@ -98,38 +73,15 @@ function love.update(dt)
             if entity.health < 0 then 
                 entity.dead = true 
                 for i = random(8, 20), 1, -1 do 
-                    table.insert(GameEntities,
-                        {
-                            type = 'Particle',
-                            x = entity.x,
-                            y = entity.y,
-                            speed = random(250, 275),
-                            lifespan = random(0.125, 0.5),
-                            w = random(4, 8),
-                            tick = 0,
-                            angle = random(0, math.pi * 2),
-                            color = ParticleColors[3],
-                            dead = false
-                        }
-                    )
+                    local p = ParticleTemplates['OnEnemyDeathSmall'](entity, 3)
+                    table.insert(GameEntities, p)
                 end
                 for i = 3, 1, -1 do 
-                    table.insert(GameEntities,
-                        {
-                            type = 'Particle',
-                            x = entity.x,
-                            y = entity.y,
-                            speed = random(10, 20),
-                            lifespan = random(0.075, 0.25),
-                            w = random(entity.w-10,entity.w+10),
-                            tick = 0,
-                            angle = 0,
-                            color = ParticleColors[i],
-                            dead = false
-                        }
-                    )
+                    local p = ParticleTemplates['OnEnemyDeathLarge'](entity, i)
+                    table.insert(GameEntities, p)
                 end
             end
+            if entity.tick  then entity.tick = entity.tick + dt end
         end
         if entity.type == 'Particle' then 
             if entity.tick > entity.lifespan then entity.dead = true end
@@ -199,21 +151,7 @@ function love.draw()
     for i = #GameEntities, 1, -1 do 
         local entity = GameEntities[i]
         if not entity.dead then
-            if entity.type == 'PlayerBullet' then 
-                drawPlayerBullet(entity)
-            end
-            if entity.type == 'Enemy' then 
-                drawEnemy(entity)
-            end
-            if entity.type == 'Particle' then 
-                drawParticle(entity)
-            end
-            if entity.type == 'ShotEffect' then 
-                drawShotEffect(entity)
-            end
-            if entity.type == 'Player' then 
-                drawPlayer(entity)
-            end
+            renderEntity(RenderStyles, entity)
         end
     end
 
@@ -270,47 +208,8 @@ function filter (things, fn)
     return filtered
 end
 
-function drawPlayer(entity) 
-    love.graphics.setColor(255,255,255, 255)
-    love.graphics.circle('line', entity.x, entity.y, entity.w, entity.w)
-end
-
-function drawPlayerBullet(entity)
-    love.graphics.setColor(0, 128, 255, 255)
-    love.graphics.push()
-    love.graphics.translate(entity.x - entity.w / 2, entity.y - entity.w / 2)
-    love.graphics.rotate(entity.angle)
-    love.graphics.circle('fill', 0, 0, entity.w, entity.w)
-    love.graphics.pop()
-    love.graphics.setColor(255, 255, 255, 255)
-end
-
-function drawParticle(entity)
-    love.graphics.setColor(entity.color.r, entity.color.g, entity.color.b, (1 - entity.tick / entity.lifespan) * entity.color.a)
-    love.graphics.push()
-    love.graphics.translate(entity.x - entity.w / 2, entity.y - entity.w / 2)
-    love.graphics.rotate(entity.angle)
-    love.graphics.rectangle('fill', 0, 0, entity.w, entity.w)
-    love.graphics.pop()
-    love.graphics.setColor(255, 255, 255, 255)
-end
-
-function drawShotEffect(entity)
-    love.graphics.setColor(255,255,255,(1 - entity.tick / entity.lifespan) * 255)
-    love.graphics.push()
-    love.graphics.translate(entity.x - entity.w / 2, entity.y - entity.w / 2)
-    love.graphics.rotate(math.pi * 0.25)
-    love.graphics.rectangle('fill', (entity.w / 2) - 3, -entity.w / 2, entity.w, entity.w)
-    love.graphics.pop()
-    love.graphics.setColor(255, 255, 255, 255)
-end
-
-function drawEnemy(entity) 
-    love.graphics.setColor(255, 0, 0, 255)
-    love.graphics.circle('line', entity.x, entity.y, entity.w, entity.w)
-    love.graphics.setFont(smallFont)
-    love.graphics.setColor(255, 255, 255, 255)
-    love.graphics.printf( 'Enemy', entity.x - entity.w, entity.y, entity.w * 2, 'center' )
+function renderEntity(renderStyles, entity, opts)
+    renderStyles[entity.type](entity, opts)
 end
 
 function handlePlayerInput(entity, dt)

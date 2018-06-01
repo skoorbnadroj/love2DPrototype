@@ -47,11 +47,11 @@ function love.load()
 
     Enemy = {
         type = 'Enemy',
-        x = random(10, gw - 10),
-        y = -20,
+        x = gw / 2,
+        y = gh / 2,
         w = 20,
-        speed = 100,
-        health = 10,
+        speed = 0,
+        health = 1000000,
         dead = false
     }
     table.insert(GameEntities, Player)
@@ -66,6 +66,7 @@ function love.update(dt)
     for i = #GameEntities, 1, -1 do 
         local entity = GameEntities[i]
         if entity.dead then 
+            entity = nil
             table.remove(GameEntities, i)
         end
     end
@@ -151,8 +152,8 @@ function love.update(dt)
                      if result then 
                         entityB.dead = true
                         entityA.health = entityA.health - 1
-                        local originX = newX
-                        local originY = newY
+                        local originX = newX + 4
+                        local originY = newY + 4
                         local angleOffset = math.atan2(newY - entityA.y, newX - entityA.x)
                         for i = random(1, 3), 1, -1 do 
                             table.insert(GameEntities,
@@ -174,6 +175,11 @@ function love.update(dt)
                 end
             end
         end
+        if entity.type == 'ShotEffect' then 
+            if entity.tick > entity.lifespan then entity.dead = true end
+            moveTo(entity, Player.x, (Player.y - Player.w / 2 - 4))
+            entity.tick = entity.tick + dt
+        end
         if entity.type == 'Player' then 
             entity.tick = entity.tick - dt
             dX, dY = handlePlayerInput(entity, dt)
@@ -192,17 +198,22 @@ function love.draw()
 
     for i = #GameEntities, 1, -1 do 
         local entity = GameEntities[i]
-        if entity.type == 'PlayerBullet' then 
-            drawPlayerBullet(entity)
-        end
-        if entity.type == 'Enemy' then 
-            drawEnemy(entity)
-        end
-        if entity.type == 'Particle' then 
-            drawParticle(entity)
-        end
-        if entity.type == 'Player' then 
-            drawPlayer(entity)
+        if not entity.dead then
+            if entity.type == 'PlayerBullet' then 
+                drawPlayerBullet(entity)
+            end
+            if entity.type == 'Enemy' then 
+                drawEnemy(entity)
+            end
+            if entity.type == 'Particle' then 
+                drawParticle(entity)
+            end
+            if entity.type == 'ShotEffect' then 
+                drawShotEffect(entity)
+            end
+            if entity.type == 'Player' then 
+                drawPlayer(entity)
+            end
         end
     end
 
@@ -210,6 +221,10 @@ function love.draw()
     love.graphics.setColor(255,255,255)
     love.graphics.setCanvas()  
     love.graphics.draw(Canvas, 0, 0, 0, sx, sy)
+end
+
+function moveTo(entity, x, y)
+    entity.x, entity.y = x, y
 end
 
 function resize(s)
@@ -223,27 +238,6 @@ function love.keypressed(key)
     if love.keyboard.isDown('escape') then 
         love.event.quit()
     end 
-
-    if key == 'p' then 
-        local originX = random(Player.x - Player.w / 2, Player.x + Player.w / 2)
-        local originY = Player.y + Player.w / 2
-        for i = random(4, 8), 1, -1 do 
-            table.insert(GameEntities,
-                {
-                    type = 'Particle',
-                    x = originX,
-                    y = originY,
-                    speed = random(150, 250),
-                    lifespan = random(1, 3),
-                    w = random(2,5),
-                    tick = 0,
-                    angle = random(math.pi*0.125, math.pi*0.75),
-                    color = ParticleColors[round(random(1, #ParticleColors))],
-                    dead = false
-                }
-            )
-        end
-    end
 end
 
 function keyWasPressed(keyTable, key)
@@ -276,21 +270,13 @@ function filter (things, fn)
     return filtered
 end
 
-function map(things, convert)
-    local mapped = {}
-    each(things, function(thing)
-        table.insert(mapped, convert(thing))
-    end)
-    return mapped
-end
-
 function drawPlayer(entity) 
     love.graphics.setColor(255,255,255, 255)
     love.graphics.circle('line', entity.x, entity.y, entity.w, entity.w)
 end
 
 function drawPlayerBullet(entity)
-    love.graphics.setColor(0 , 255, 255, 255)
+    love.graphics.setColor(0, 128, 255, 255)
     love.graphics.push()
     love.graphics.translate(entity.x - entity.w / 2, entity.y - entity.w / 2)
     love.graphics.rotate(entity.angle)
@@ -309,11 +295,22 @@ function drawParticle(entity)
     love.graphics.setColor(255, 255, 255, 255)
 end
 
+function drawShotEffect(entity)
+    love.graphics.setColor(255,255,255,(1 - entity.tick / entity.lifespan) * 255)
+    love.graphics.push()
+    love.graphics.translate(entity.x - entity.w / 2, entity.y - entity.w / 2)
+    love.graphics.rotate(math.pi * 0.25)
+    love.graphics.rectangle('fill', (entity.w / 2) - 3, -entity.w / 2, entity.w, entity.w)
+    love.graphics.pop()
+    love.graphics.setColor(255, 255, 255, 255)
+end
+
 function drawEnemy(entity) 
-    love.graphics.setColor(0, 0, 0, 255)
-    love.graphics.circle('fill', entity.x, entity.y, entity.w, entity.w)
     love.graphics.setColor(255, 0, 0, 255)
     love.graphics.circle('line', entity.x, entity.y, entity.w, entity.w)
+    love.graphics.setFont(smallFont)
+    love.graphics.setColor(255, 255, 255, 255)
+    love.graphics.printf( 'Enemy', entity.x - entity.w, entity.y, entity.w * 2, 'center' )
 end
 
 function handlePlayerInput(entity, dt)
@@ -333,9 +330,9 @@ function handlePlayerInput(entity, dt)
 
     if entity.tick < 0 then 
         if love.keyboard.isDown('space') then 
-            local originX = (Player.x - Player.w / 2) + 4
+            local originX = (Player.x - Player.w / 2)
             local originY = Player.y - Player.w / 2 - 10
-            for i = 2, 1, -1 do 
+            for i = 3, 1, -1 do 
                 local offsetX = i - 1
                 table.insert(GameEntities,
                     {
@@ -349,6 +346,35 @@ function handlePlayerInput(entity, dt)
                     }
                 )
             end
+            for i = 6, 1, -1 do 
+                local originX = Player.x 
+                local originY = (Player.y - Player.w / 2) - 5
+                table.insert(GameEntities,
+                    {
+                        type = 'Particle',
+                        x = originX,
+                        y = originY,
+                        speed = 200,
+                        lifespan = random(0.075, 0.25),
+                        w = 4,
+                        tick = 0,
+                        angle = math.pi + math.pi / 8 * i,
+                        color = {r = 0, g = 255, b = 255, a = 255},
+                        dead = false
+                    }
+                )
+            end
+            table.insert(GameEntities,
+                {
+                    type = 'ShotEffect',
+                    x = Player.x,
+                    y = Player.y - Player.w / 2 - 4,
+                    lifespan = 0.15,
+                    w = 10,
+                    tick = 0,
+                    dead = false
+                }
+            )
         end  
         entity.tick = entity.fireRate 
     end

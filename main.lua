@@ -20,24 +20,24 @@ ParticleColors = {
         r = 255,
         g = 128,
         b = 0,
-        a = 200
+        a = 235
     },
     {
         r = 255,
         g = 0,
         b = 0,
-        a = 200
+        a = 235
     },
     {
         r = 255,
         g = 255,
         b = 255,
-        a = 200
+        a = 235
     }
 }
 
 local enemySpawnTimer = 0
-local enemySpawnThreshold = 2
+local enemySpawnThreshold = 0.75
 
 function love.load()
     Canvas:setFilter('nearest', 'nearest')
@@ -77,7 +77,7 @@ function love.update(dt)
                 x = random(10, gw - 10),
                 y = -20,
                 w = 20,
-                speed = random(10, 30),
+                speed = random(70, 100),
                 health = 10,
                 dead = false
             }
@@ -94,7 +94,41 @@ function love.update(dt)
             if checkEntityBounds(entity, -50, gw + 50, -100, gh + 50) then 
                 entity.dead = true 
             end
-            if entity.health < 0 then entity.dead = true end
+            if entity.health < 0 then 
+                entity.dead = true 
+                for i = random(8, 20), 1, -1 do 
+                    table.insert(GameEntities,
+                        {
+                            type = 'Particle',
+                            x = entity.x,
+                            y = entity.y,
+                            speed = random(250, 275),
+                            lifespan = random(0.125, 0.5),
+                            w = random(4, 8),
+                            tick = 0,
+                            angle = random(0, math.pi * 2),
+                            color = ParticleColors[3],
+                            dead = false
+                        }
+                    )
+                end
+                for i = 3, 1, -1 do 
+                    table.insert(GameEntities,
+                        {
+                            type = 'Particle',
+                            x = entity.x,
+                            y = entity.y,
+                            speed = random(10, 20),
+                            lifespan = random(0.075, 0.25),
+                            w = random(entity.w-10,entity.w+10),
+                            tick = 0,
+                            angle = 0,
+                            color = ParticleColors[i],
+                            dead = false
+                        }
+                    )
+                end
+            end
         end
         if entity.type == 'Particle' then 
             if entity.tick > entity.lifespan then entity.dead = true end
@@ -126,8 +160,8 @@ function love.update(dt)
                                     type = 'Particle',
                                     x = originX,
                                     y = originY,
-                                    speed = random(150, 250),
-                                    lifespan = random(0.25, 1),
+                                    speed = random(200, 300),
+                                    lifespan = random(0.25, 1.5),
                                     w = random(2,5),
                                     tick = 0,
                                     angle = angleOffset + random(-math.pi/5, math.pi/5),
@@ -158,14 +192,14 @@ function love.draw()
 
     for i = #GameEntities, 1, -1 do 
         local entity = GameEntities[i]
+        if entity.type == 'PlayerBullet' then 
+            drawPlayerBullet(entity)
+        end
         if entity.type == 'Enemy' then 
             drawEnemy(entity)
         end
         if entity.type == 'Particle' then 
             drawParticle(entity)
-        end
-        if entity.type == 'PlayerBullet' then 
-            drawPlayerBullet(entity)
         end
         if entity.type == 'Player' then 
             drawPlayer(entity)
@@ -276,9 +310,10 @@ function drawParticle(entity)
 end
 
 function drawEnemy(entity) 
-    love.graphics.setColor(255, 0, 0, 255)
+    love.graphics.setColor(0, 0, 0, 255)
     love.graphics.circle('fill', entity.x, entity.y, entity.w, entity.w)
-    love.graphics.setColor(255, 255, 255, 255)
+    love.graphics.setColor(255, 0, 0, 255)
+    love.graphics.circle('line', entity.x, entity.y, entity.w, entity.w)
 end
 
 function handlePlayerInput(entity, dt)

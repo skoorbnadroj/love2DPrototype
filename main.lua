@@ -5,6 +5,7 @@ Canvas = love.graphics.newCanvas(gw, gh)
 RenderStyles = require 'renderStyles'
 ParticleTemplates = require 'particleTemplates'
 EnemyTemplates = require 'enemyTemplates'
+EntityUpdates = require 'entityUpdates'
 
 GameEntities = {}
 
@@ -38,13 +39,7 @@ function love.load()
 end
 
 function love.update(dt)
-    for i = #GameEntities, 1, -1 do 
-        local entity = GameEntities[i]
-        if entity.dead then 
-            entity = nil
-            table.remove(GameEntities, i)
-        end
-    end
+    removeDeadEntities(GameEntities)
 
     if enemySpawnTimer > enemySpawnThreshold then 
         table.insert(GameEntities,
@@ -63,80 +58,7 @@ function love.update(dt)
 
     for i = #GameEntities, 1, -1 do 
         local entity = GameEntities[i]
-        local dX, dY
-        if entity.type == 'Enemy' then 
-            dX, dY = (math.sin(entity.tick or 0) * entity.speed) * dt, (math.cos(entity.tick or 0) * entity.speed) * dt 
-            updateEntityPosition(entity, dX, dY)
-            if checkEntityBounds(entity, -50, gw + 50, -100, gh + 50) then 
-                entity.dead = true 
-            end
-            if entity.health < 0 then 
-                entity.dead = true 
-                for i = random(8, 20), 1, -1 do 
-                    local p = ParticleTemplates['OnEnemyDeathSmall'](entity, 3)
-                    table.insert(GameEntities, p)
-                end
-                for i = 3, 1, -1 do 
-                    local p = ParticleTemplates['OnEnemyDeathLarge'](entity, i)
-                    table.insert(GameEntities, p)
-                end
-            end
-            if entity.tick  then entity.tick = entity.tick + dt end
-        end
-        if entity.type == 'Particle' then 
-            if entity.tick > entity.lifespan then entity.dead = true end
-            entity.tick = entity.tick + dt
-            dX, dY = entity.speed * math.cos(entity.angle) * dt, entity.speed * math.sin(entity.angle) * dt
-            entity.speed = entity.speed * 0.98
-            updateEntityPosition(entity, dX, dY)
-        end
-        if entity.type == 'PlayerBullet' then 
-            dX, dY = entity.speed * math.cos(entity.angle) * dt, entity.speed * math.sin(entity.angle) * dt
-            updateEntityPosition(entity, dX, dY)
-            if checkEntityBounds(entity, -entity.w, gw + entity.w, -entity.w, gh + entity.w) then 
-                entity.dead = true 
-            end
-            for j = #GameEntities, 1, -1 do 
-                local entityA = GameEntities[j]
-                local entityB = entity
-                if entityA.type == 'Enemy' then 
-                    local result, newX, newY = circleCollision(entityA, entityB)
-                     if result then 
-                        entityB.dead = true
-                        entityA.health = entityA.health - 1
-                        local originX = newX + 4
-                        local originY = newY + 4
-                        local angleOffset = math.atan2(newY - entityA.y, newX - entityA.x)
-                        for i = random(1, 3), 1, -1 do 
-                            table.insert(GameEntities,
-                                {
-                                    type = 'Particle',
-                                    x = originX,
-                                    y = originY,
-                                    speed = random(200, 300),
-                                    lifespan = random(0.25, 1.5),
-                                    w = random(2,5),
-                                    tick = 0,
-                                    angle = angleOffset + random(-math.pi/5, math.pi/5),
-                                    color = ParticleColors[round(random(1, #ParticleColors))],
-                                    dead = false
-                                }
-                            )
-                        end
-                    end
-                end
-            end
-        end
-        if entity.type == 'ShotEffect' then 
-            if entity.tick > entity.lifespan then entity.dead = true end
-            moveTo(entity, Player.x, (Player.y - Player.w / 2 - 4))
-            entity.tick = entity.tick + dt
-        end
-        if entity.type == 'Player' then 
-            entity.tick = entity.tick - dt
-            dX, dY = handlePlayerInput(entity, dt)
-            updateEntityPosition(entity, dX, dY)
-        end
+        updateEntity(EntityUpdates, entity, dt)
     end
 
     enemySpawnTimer = enemySpawnTimer + dt
@@ -170,6 +92,22 @@ function resize(s)
     sx, sy = s, s
 end
 
+function removeDeadEntities(entities)
+    for i = #GameEntities, 1, -1 do 
+        local entity = GameEntities[i]
+        if entity.dead then 
+            entity = nil
+            table.remove(GameEntities, i)
+        end
+    end
+end
+
+function each(table, fn)
+    for i = #table, 1, -1 do 
+        fn(table[i])
+    end
+end
+
 function love.keypressed(key)
     love.keyboard.keysPressed[key] = true
 
@@ -188,6 +126,10 @@ end
 
 function renderEntity(renderStyles, entity, opts)
     renderStyles[entity.type](entity, opts)
+end
+
+function updateEntity(entityUpdates, entity, dt)
+    entityUpdates[entity.type](entity, dt)
 end
 
 function handlePlayerInput(entity, dt)

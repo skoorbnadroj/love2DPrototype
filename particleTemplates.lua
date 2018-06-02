@@ -26,5 +26,19 @@ return {
         color = ParticleColors[colorIndex],
         dead = false
     }
-    end
+    end,
+    ['Shrapnel'] = function(x, y, angleOffset)
+        return {
+            type = 'Particle',
+            x = x,
+            y = y,
+            speed = random(200, 300),
+            lifespan = random(0.25, 1.5),
+            w = random(2,5),
+            tick = 0,
+            angle = angleOffset + random(-math.pi/5, math.pi/5),
+            color = ParticleColors[round(random(1, #ParticleColors))],
+            dead = false
+        }
+    end,
 }

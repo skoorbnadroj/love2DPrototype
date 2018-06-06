@@ -41,4 +41,19 @@ return {
             dead = false
         }
     end,
+    ['ShotEffectParticle'] = function (x, y, particleindex)
+        return 
+        {
+            type = 'Particle',
+            x = x,
+            y = y,
+            speed = 200,
+            lifespan = random(0.075, 0.25),
+            w = 4,
+            tick = 0,
+            angle = math.pi + math.pi / 8 * particleindex,
+            color = {r = 0, g = 255, b = 255, a = 255},
+            dead = false
+        }
+    end,
 }

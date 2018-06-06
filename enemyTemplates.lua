@@ -11,5 +11,17 @@ return {
         health = 1000000,
         dead = false
     }
-end
+    end, 
+    ['FlyDown'] = function()
+        return            
+        {
+            type = 'Enemy',
+            x = random(10, gw - 10),
+            y = -20,
+            w = 20,
+            speed = random(70, 100),
+            health = 10,
+            dead = false
+        }
+    end
 }

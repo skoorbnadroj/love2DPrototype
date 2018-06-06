@@ -6,6 +6,7 @@ RenderStyles = require 'renderStyles'
 ParticleTemplates = require 'particleTemplates'
 EnemyTemplates = require 'enemyTemplates'
 EntityUpdates = require 'entityUpdates'
+BulletTemplates = require 'bulletTemplates'
 
 GameEntities = {}
 
@@ -42,17 +43,7 @@ function love.update(dt)
     removeDeadEntities(GameEntities)
 
     if enemySpawnTimer > enemySpawnThreshold then 
-        table.insert(GameEntities,
-            {
-                type = 'Enemy',
-                x = random(10, gw - 10),
-                y = -20,
-                w = 20,
-                speed = random(70, 100),
-                health = 10,
-                dead = false
-            }
-        )
+        table.insert(GameEntities, EnemyTemplates['FlyDown']())
         enemySpawnTimer = 0
     end
 
@@ -149,38 +140,21 @@ function handlePlayerInput(entity, dt)
 
     if entity.tick < 0 then 
         if love.keyboard.isDown('space') then 
-            local originX = (Player.x - Player.w / 2)
-            local originY = Player.y - Player.w / 2 - 10
             for i = 3, 1, -1 do 
-                local offsetX = i - 1
-                table.insert(GameEntities,
-                    {
-                        type = 'PlayerBullet',
-                        x = originX + (offsetX * 8),
-                        y = originY,
-                        speed = 350,
-                        w = 4,
-                        angle = math.pi + math.pi / 2,
-                        dead = false
-                    }
+                table.insert(GameEntities, 
+                    BulletTemplates['DefaultPlayerBullet'](
+                        (Player.x - Player.w / 2), 
+                        Player.y - Player.w / 2 - 10, 
+                        i - 1)
                 )
             end
             for i = 6, 1, -1 do 
-                local originX = Player.x 
-                local originY = (Player.y - Player.w / 2) - 5
                 table.insert(GameEntities,
-                    {
-                        type = 'Particle',
-                        x = originX,
-                        y = originY,
-                        speed = 200,
-                        lifespan = random(0.075, 0.25),
-                        w = 4,
-                        tick = 0,
-                        angle = math.pi + math.pi / 8 * i,
-                        color = {r = 0, g = 255, b = 255, a = 255},
-                        dead = false
-                    }
+                    ParticleTemplates['ShotEffectParticle'](
+                        Player.x, 
+                        (Player.y - Player.w / 2) - 5, 
+                        i
+                    )
                 )
             end
             table.insert(GameEntities,

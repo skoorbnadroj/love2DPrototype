@@ -148,6 +148,10 @@ function handlePlayerInput(entity, dt)
                         i - 1)
                 )
             end
+            table.insert(GameEntities, 
+                BulletTemplates['LargePlayerBullet'](
+                (Player.x - Player.w / 2), 
+                Player.y - Player.w / 2 - 10))
             for i = 6, 1, -1 do 
                 table.insert(GameEntities,
                     ParticleTemplates['ShotEffectParticle'](

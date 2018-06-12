@@ -11,4 +11,16 @@ return {
             dead = false
         }
     end,
+    ['LargePlayerBullet'] = function (x, y)
+        return 
+        {
+            type = 'PlayerBullet',
+            x = x,
+            y = y,
+            speed = 400,
+            w = 8,
+            angle = math.pi + math.pi / 2,
+            dead = false
+        }
+    end,
 }

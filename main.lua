@@ -2,6 +2,7 @@ require 'Utils'
 
 Canvas = love.graphics.newCanvas(gw, gh)
 
+require 'camera'
 RenderStyles = require 'renderStyles'
 ParticleTemplates = require 'particleTemplates'
 EnemyTemplates = require 'enemyTemplates'
@@ -21,8 +22,16 @@ Player = {
     dead = false
 }
 
+Camera = {
+    x = 0,
+    y = 0,
+    scaleX = 1,
+    scaleY = 1,
+    rotation = 0
+}
+
 local enemySpawnTimer = 0
-local enemySpawnThreshold = 3
+local enemySpawnThreshold = 0.125
 
 function love.load()
     Canvas:setFilter('nearest', 'nearest')
@@ -37,6 +46,8 @@ function love.load()
     love.keyboard.keysPressed = {}
 
     smallFont = love.graphics.newFont('font.ttf', 8)
+
+    print(RenderStyles)
 end
 
 function love.update(dt)
@@ -52,22 +63,24 @@ function love.update(dt)
         updateEntity(EntityUpdates, entity, dt)
     end
 
+    setCameraPosition(Camera, 0, 0)
     enemySpawnTimer = enemySpawnTimer + dt
     love.keyboard.keysPressed = {}
 end
 
 function love.draw()
+
     love.graphics.setColor(255, 255, 255)
     love.graphics.setCanvas(Canvas)
     love.graphics.clear()
-
+    setCamera(Camera)
     for i = #GameEntities, 1, -1 do 
         local entity = GameEntities[i]
         if not entity.dead then
             renderEntity(RenderStyles, entity)
         end
     end
-
+    unsetCamera(Camera)
     displayFPS()
     love.graphics.setColor(255,255,255)
     love.graphics.setCanvas()  
@@ -148,10 +161,6 @@ function handlePlayerInput(entity, dt)
                         i - 1)
                 )
             end
-            table.insert(GameEntities, 
-                BulletTemplates['LargePlayerBullet'](
-                (Player.x - Player.w / 2), 
-                Player.y - Player.w / 2 - 10))
             for i = 6, 1, -1 do 
                 table.insert(GameEntities,
                     ParticleTemplates['ShotEffectParticle'](

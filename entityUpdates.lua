@@ -42,7 +42,7 @@ return {
         end
         if entity.health < 0 then 
             entity.dead = true 
-            for i = random(8, 20), 1, -1 do 
+            for i = random(50, 100), 1, -1 do 
                 local p = ParticleTemplates['OnEnemyDeathSmall'](entity, 3)
                 table.insert(GameEntities, p)
             end

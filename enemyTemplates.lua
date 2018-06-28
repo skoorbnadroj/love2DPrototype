@@ -20,7 +20,7 @@ return {
             y = -20,
             w = 20,
             speed = random(70, 100),
-            health = 10,
+            health = 2,
             dead = false
         }
     end

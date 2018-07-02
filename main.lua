@@ -15,8 +15,8 @@ Player = {
     type = 'Player',
     x = gw / 2,
     y = gh - 30,
-    w = 10,
-    speed = 120,
+    w = 50,
+    speed = 300,
     fireRate = 0.085,
     tick = 0,
     dead = false
@@ -34,10 +34,6 @@ local enemySpawnTimer = 0
 local enemySpawnThreshold = 0.125
 
 function love.load()
-    Canvas:setFilter('nearest', 'nearest')
-    love.graphics.setDefaultFilter('nearest', 'nearest')
-    love.graphics.setLineStyle('rough')
-    resize(3)
 
     local enemy = EnemyTemplates['Circling']()
     table.insert(GameEntities, Player)
@@ -45,13 +41,13 @@ function love.load()
 
     love.keyboard.keysPressed = {}
 
-    smallFont = love.graphics.newFont('font.ttf', 8)
+    smallFont = love.graphics.newFont('font.ttf', 20)
 
     print(RenderStyles)
 end
 
 function love.update(dt)
-    removeDeadEntities(GameEntities)
+    RemoveDeadEntities(GameEntities)
 
     if enemySpawnTimer > enemySpawnThreshold then 
         table.insert(GameEntities, EnemyTemplates['FlyDown']())
@@ -96,7 +92,7 @@ function resize(s)
     sx, sy = s, s
 end
 
-function removeDeadEntities(entities)
+function RemoveDeadEntities(entities)
     for i = #GameEntities, 1, -1 do 
         local entity = GameEntities[i]
         if entity.dead then 
@@ -156,8 +152,8 @@ function handlePlayerInput(entity, dt)
             for i = 3, 1, -1 do 
                 table.insert(GameEntities, 
                     BulletTemplates['DefaultPlayerBullet'](
-                        (Player.x - Player.w / 2), 
-                        Player.y - Player.w / 2 - 10, 
+                        Player.x, 
+                        Player.y - Player.w, 
                         i - 1)
                 )
             end
@@ -165,7 +161,7 @@ function handlePlayerInput(entity, dt)
                 table.insert(GameEntities,
                     ParticleTemplates['ShotEffectParticle'](
                         Player.x, 
-                        (Player.y - Player.w / 2) - 5, 
+                        Player.y - Player.w, 
                         i
                     )
                 )
@@ -174,7 +170,7 @@ function handlePlayerInput(entity, dt)
                 {
                     type = 'ShotEffect',
                     x = Player.x,
-                    y = Player.y - Player.w / 2 - 4,
+                    y = Player.y - Player.w,
                     lifespan = 0.15,
                     w = 10,
                     tick = 0,

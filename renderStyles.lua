@@ -23,7 +23,9 @@ return {
 
     ['Player'] = function(entity) 
         love.graphics.setColor(255,255,255, 255)
+        love.graphics.setLineWidth(3)
         love.graphics.circle('line', entity.x, entity.y, entity.w, entity.w)
+        love.graphics.setLineWidth(1)
     end,
     
     ['PlayerBullet'] = function(entity)
@@ -58,7 +60,9 @@ return {
     
     ['Enemy'] = function(entity) 
         love.graphics.setColor(255, 0, 0, 255)
+        love.graphics.setLineWidth(4)
         love.graphics.circle('line', entity.x, entity.y, entity.w, entity.w)
+        love.graphics.setLineWidth(1)
         love.graphics.setFont(smallFont)
         love.graphics.setColor(255, 255, 255, 255)
         love.graphics.printf( 'Enemy', entity.x - entity.w, entity.y, entity.w * 2, 'center' )

@@ -1,12 +1,13 @@
 return {
     ['DefaultPlayerBullet'] = function (x, y, offsetX)
+        local width = 10
         return 
         {
             type = 'PlayerBullet',
-            x = x + (offsetX * 8),
+            x = x + (offsetX * (width*2)),
             y = y,
-            speed = 350,
-            w = 4,
+            speed = 500,
+            w = width,
             angle = math.pi + math.pi / 2,
             dead = false
         }

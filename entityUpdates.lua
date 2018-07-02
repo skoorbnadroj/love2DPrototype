@@ -56,7 +56,7 @@ return {
     end,
     ['ShotEffect'] = function(entity, dt)
         if entity.tick > entity.lifespan then entity.dead = true end
-        moveTo(entity, Player.x, (Player.y - Player.w / 2 - 4))
+        moveTo(entity, Player.x, Player.y - Player.w)
         entity.tick = entity.tick + dt
     end,
     ['Player'] = function(entity, dt)

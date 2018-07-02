@@ -1,7 +1,7 @@
 
 -- Game Width and Height
-gw = 200
-gh = 260
+gw = 600
+gh = 800
 
 -- Scale Width and Height
 sx = 1
